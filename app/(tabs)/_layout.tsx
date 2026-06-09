@@ -1,33 +1,65 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+// app/(tabs)/_layout.tsx
+import { Tabs } from "expo-router";
+import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+// Version sans useAuth pour éviter l'erreur
+export default function TabsLayout() {
+  // Supprimez l'utilisation de useAuth ici
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        headerShown: true,
+        headerStyle: { backgroundColor: "#4F46E5" },
+        headerTintColor: "#FFFFFF",
+        tabBarActiveTintColor: "#4F46E5",
+        tabBarInactiveTintColor: "#9CA3AF",
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Accueil",
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>🏠</Text>
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="search"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Rechercher",
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>🔍</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recommendations"
+        options={{
+          title: "Recommandations",
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>💡</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: "Tendances",
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>📊</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profil",
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>👤</Text>
+          ),
         }}
       />
     </Tabs>
