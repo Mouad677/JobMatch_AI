@@ -19,9 +19,11 @@ export interface JobOffer {
   title: string;
   company: string;
   location: string;
+  contractType: string;
   description: string;
   url: string;
   source: string;
+  publishedAt: string;
   matchingScore: number;
   skills: string[];
 }
@@ -31,12 +33,12 @@ export async function searchJobs(keyword: string, location: string): Promise<Job
     const token = await AsyncStorage.getItem('@jobmatch_token');
     
     if (!token) {
-      console.log('No token found, user not authenticated');
+      console.log('No token found');
       return [];
     }
     
     const url = `${API_BASE_URL}/jobs/search?keyword=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}`;
-    console.log('Searching jobs at:', url);
+    console.log('Searching:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -47,7 +49,7 @@ export async function searchJobs(keyword: string, location: string): Promise<Job
     });
     
     const data = await response.json();
-    console.log('Search response:', data);
+    console.log('Search results:', data.count);
     
     if (!response.ok) {
       throw new Error(data.error || 'Erreur lors de la recherche');
@@ -55,7 +57,7 @@ export async function searchJobs(keyword: string, location: string): Promise<Job
     
     return data.jobs || [];
   } catch (error) {
-    console.error('Search jobs error:', error);
+    console.error('Search error:', error);
     return [];
   }
 }
@@ -65,14 +67,10 @@ export async function getRecommendations(): Promise<{ recommendations: JobOffer[
     const token = await AsyncStorage.getItem('@jobmatch_token');
     
     if (!token) {
-      console.log('No token found, user not authenticated');
       return { recommendations: [], hasSkills: false };
     }
     
-    const url = `${API_BASE_URL}/jobs/recommendations`;
-    console.log('Getting recommendations from:', url);
-    
-    const response = await fetch(url, {
+    const response = await fetch(`${API_BASE_URL}/jobs/recommendations`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -81,10 +79,9 @@ export async function getRecommendations(): Promise<{ recommendations: JobOffer[
     });
     
     const data = await response.json();
-    console.log('Recommendations response:', data);
     
     if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de la récupération');
+      throw new Error(data.error || 'Erreur');
     }
     
     return {
@@ -94,30 +91,5 @@ export async function getRecommendations(): Promise<{ recommendations: JobOffer[
   } catch (error) {
     console.error('Get recommendations error:', error);
     return { recommendations: [], hasSkills: false };
-  }
-}
-
-export async function getJobDetails(jobId: string): Promise<JobOffer | null> {
-  try {
-    const token = await AsyncStorage.getItem('@jobmatch_token');
-    
-    const response = await fetch(`${API_BASE_URL}/jobs/job/${jobId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de la récupération');
-    }
-    
-    return data.job || null;
-  } catch (error) {
-    console.error('Get job details error:', error);
-    return null;
   }
 }

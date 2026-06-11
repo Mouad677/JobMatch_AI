@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -86,6 +87,25 @@ export default function HomeScreen() {
     }
   };
 
+  const openJobUrl = async (url: string) => {
+    if (!url || url === '#') {
+      Alert.alert('Info', 'Lien non disponible pour cette offre');
+      return;
+    }
+    
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Erreur', 'Impossible d\'ouvrir le lien');
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      Alert.alert('Erreur', 'Impossible d\'ouvrir le lien');
+    }
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10B981';
     if (score >= 60) return '#F59E0B';
@@ -98,6 +118,23 @@ export default function HomeScreen() {
     if (score >= 60) return 'Bon match';
     if (score >= 40) return 'Match moyen';
     return 'Match faible';
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return "Aujourd'hui";
+      if (diffDays === 1) return 'Hier';
+      if (diffDays < 7) return `Il y a ${diffDays} jours`;
+      if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+      return `Il y a ${Math.floor(diffDays / 30)} mois`;
+    } catch (error) {
+      return '';
+    }
   };
 
   if (isLoading) {
@@ -175,18 +212,8 @@ export default function HomeScreen() {
             <TouchableOpacity 
               key={job.id || index} 
               style={styles.jobCard}
-              onPress={() => {
-                if (job.url) {
-                  // Ouvrir l'URL dans le navigateur
-                  Alert.alert('Offre d\'emploi', `Voir l'offre sur ${job.source}`, [
-                    { text: 'Annuler', style: 'cancel' },
-                    { text: 'Voir', onPress: () => {
-                      // Rediriger vers l'URL
-                      router.push(`/job/${job.id}`);
-                    } }
-                  ]);
-                }
-              }}
+              onPress={() => openJobUrl(job.url)}
+              activeOpacity={0.7}
             >
               <View style={styles.jobHeader}>
                 <Text style={styles.jobTitle}>{job.title}</Text>
@@ -197,8 +224,21 @@ export default function HomeScreen() {
                 )}
               </View>
               <Text style={styles.companyName}>{job.company}</Text>
-              <Text style={styles.jobLocation}>📍 {job.location || 'Maroc'}</Text>
-              <Text style={styles.jobSource}>📌 Source: {job.source || 'API'}</Text>
+              <View style={styles.jobMetaRow}>
+                <Text style={styles.jobLocation}>📍 {job.location || 'Maroc'}</Text>
+                <Text style={styles.jobContract}>📄 {job.contractType || 'Non spécifié'}</Text>
+              </View>
+              <Text style={styles.jobSource}>📌 Source: {job.source || 'JobMatch'}</Text>
+              {job.publishedAt && (
+                <Text style={styles.jobDate}>🕒 {formatDate(job.publishedAt)}</Text>
+              )}
+              
+              {/* Aperçu de la description */}
+              {job.description && (
+                <Text style={styles.jobDescription} numberOfLines={2}>
+                  {job.description.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                </Text>
+              )}
               
               {job.skills && job.skills.length > 0 && (
                 <View style={styles.skillsContainer}>
@@ -231,7 +271,7 @@ export default function HomeScreen() {
           <Text style={styles.noResultsEmoji}>🔍</Text>
           <Text style={styles.noResultsTitle}>Aucune offre trouvée</Text>
           <Text style={styles.noResultsText}>
-            Essayez d'autres mots-clés comme "Développeur", "Data", "Marketing"...
+            Essayez d'autres mots-clés comme "Développeur", "Data", "React", "Python"...
           </Text>
           <TouchableOpacity 
             style={styles.retryButton}
@@ -382,17 +422,36 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 14,
     color: '#6B7280',
+    marginBottom: 6,
+  },
+  jobMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   jobLocation: {
     fontSize: 12,
     color: '#9CA3AF',
-    marginBottom: 4,
+  },
+  jobContract: {
+    fontSize: 12,
+    color: '#10B981',
   },
   jobSource: {
     fontSize: 11,
     color: '#A78BFA',
+    marginBottom: 2,
+  },
+  jobDate: {
+    fontSize: 11,
+    color: '#9CA3AF',
     marginBottom: 8,
+  },
+  jobDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 8,
+    lineHeight: 16,
   },
   skillsContainer: {
     flexDirection: 'row',
