@@ -3,15 +3,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function LoginScreen() {
@@ -21,16 +21,22 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
+  
+  // États pour le modal d'erreur
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
     // Validation des champs
     if (!email.trim()) {
-      Alert.alert("Erreur", "Veuillez entrer votre adresse email.");
+      setErrorMessage("Veuillez entrer votre adresse email.");
+      setErrorModalVisible(true);
       return;
     }
 
     if (!password) {
-      Alert.alert("Erreur", "Veuillez entrer votre mot de passe.");
+      setErrorMessage("Veuillez entrer votre mot de passe.");
+      setErrorModalVisible(true);
       return;
     }
 
@@ -39,27 +45,26 @@ export default function LoginScreen() {
     try {
       console.log("Tentative de connexion avec:", email);
 
-      const loggedInUser = await login(email.trim(), password);
+      const result = await login(email.trim(), password);
 
-      console.log("Résultat de connexion:", loggedInUser);
+      console.log("Résultat de connexion:", result);
 
-      if (loggedInUser) {
-        if (loggedInUser.role === "pedagogic_director") {
+      if (result.success && result.user) {
+        // Connexion réussie
+        if (result.user.role === "pedagogic_director") {
           router.replace("/(director)/director-dashboard");
-        } else if (loggedInUser.role === "student") {
-          router.replace("/(tabs)");
         } else {
           router.replace("/(tabs)");
         }
       } else {
-        Alert.alert("Erreur", "Email ou mot de passe incorrect");
+        // Afficher le message d'erreur dans le modal personnalisé
+        setErrorMessage(result.message || "Email ou mot de passe incorrect");
+        setErrorModalVisible(true);
       }
     } catch (error: any) {
       console.error("Erreur de connexion:", error);
-      Alert.alert(
-        "Erreur de connexion",
-        error.message || "Une erreur est survenue. Veuillez réessayer.",
-      );
+      setErrorMessage(error.message || "Une erreur est survenue. Veuillez réessayer.");
+      setErrorModalVisible(true);
     } finally {
       setLocalLoading(false);
     }
@@ -122,14 +127,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Lien mot de passe oublié */}
-          <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => router.push("/(auth)/forgot-password")}
-            disabled={isLoadingState}
-          >
-            <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
-          </TouchableOpacity>
+            
 
           {/* Bouton de connexion */}
           <TouchableOpacity
@@ -161,34 +159,33 @@ export default function LoginScreen() {
               <Text style={styles.registerLink}>S'inscrire</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Informations de test */}
-          <View style={styles.demoContainer}>
-            <Text style={styles.demoTitle}>🔐 Comptes de démonstration :</Text>
-            <TouchableOpacity
-              onPress={() => {
-                setEmail("etudiant@test.com");
-                setPassword("123456");
-              }}
-            >
-              <Text style={styles.demoText}>
-                👨‍🎓 Étudiant: etudiant@test.com
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setEmail("directeur@test.com");
-                setPassword("123456");
-              }}
-            >
-              <Text style={styles.demoText}>
-                👨‍🏫 Directeur: directeur@test.com
-              </Text>
-            </TouchableOpacity>
-            <Text style={styles.demoInfo}>Mot de passe: 123456</Text>
-          </View>
+          
         </View>
       </View>
+
+      {/* Modal d'erreur personnalisé */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Text style={styles.modalIcon}>⚠️</Text>
+            </View>
+            <Text style={styles.modalTitle}>Erreur de connexion</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -347,5 +344,65 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 4,
     fontStyle: "italic",
+  },
+  // Styles pour le modal d'erreur
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    width: "80%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  modalIcon: {
+    fontSize: 30,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#DC2626",
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  modalButton: {
+    backgroundColor: "#4F46E5",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    minWidth: 120,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

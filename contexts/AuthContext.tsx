@@ -23,7 +23,7 @@ type AuthContextType = {
   user: User | null;
   student: Student | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<{ success: boolean; user?: User; message?: string }>;
   register: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -58,19 +58,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<User | null> => {
-    const response = await authService.login(email, password);
-
-    if (response.user) {
-      setUser(response.user as User);
-      const profile = response.profile ?? response.studentProfile;
-      if (profile && response.user.role === 'student') {
-        setStudent({ ...response.user, ...profile } as Student);
+  const login = async (email: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> => {
+    try {
+      const response = await authService.login(email, password);
+      
+      console.log('Login response:', response);
+      
+      if (response.user) {
+        setUser(response.user as User);
+        const profile = response.profile ?? response.studentProfile;
+        if (profile && response.user.role === 'student') {
+          setStudent({ ...response.user, ...profile } as Student);
+        }
+        
+        // Sauvegarder dans AsyncStorage
+        await AsyncStorage.setItem('@jobmatch_user', JSON.stringify(response.user));
+        if (profile) {
+          await AsyncStorage.setItem('@jobmatch_profile', JSON.stringify(profile));
+        }
+        if (response.token) {
+          await AsyncStorage.setItem('@jobmatch_token', response.token);
+        }
+        
+        return { success: true, user: response.user };
       }
-      return response.user as User;
+      
+      return { success: false, message: response.message || 'Email ou mot de passe incorrect' };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      return { success: false, message: error.message || 'Email ou mot de passe incorrect' };
     }
-
-    return null;
   };
 
   const register = async (userData: any) => {
@@ -87,9 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout service error:', error);
     } finally {
-      // Nettoyer l'état local
       setUser(null);
       setStudent(null);
+      await AsyncStorage.removeItem('@jobmatch_user');
+      await AsyncStorage.removeItem('@jobmatch_profile');
+      await AsyncStorage.removeItem('@jobmatch_token');
     }
   };
 

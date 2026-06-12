@@ -267,45 +267,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Préférences */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Préférences de recherche</Text>
-        
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceLabel}>Type de contrat</Text>
-          <Text style={styles.preferenceValue}>CDI, Stage</Text>
-        </View>
-        
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceLabel}>Localisation</Text>
-          <Text style={styles.preferenceValue}>Casablanca, Rabat</Text>
-        </View>
-        
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceLabel}>Salaire souhaité</Text>
-          <Text style={styles.preferenceValue}>10 000 - 15 000 DH</Text>
-        </View>
-      </View>
-
-      {/* Statistiques */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Mes statistiques</Text>
-        
-        <View style={styles.statsGrid}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Offres consultées</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Candidatures</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>3</Text>
-            <Text style={styles.statLabel}>Entretiens</Text>
-          </View>
-        </View>
-      </View>
+      
 
       {/* Bouton de déconnexion */}
       <TouchableOpacity 
